@@ -1,0 +1,12 @@
+RewriteEngine on
+
+# Asegurarte de que el host coincide con tu dominio
+RewriteCond %{HTTP_HOST} ^area-privada.gestoriayfincasgranada.com$ [NC]
+
+# Evitar un bucle infinito al no redirigir ya dentro de la carpeta "public"
+RewriteCond %{REQUEST_URI} !^/public/
+
+# Redirigir todo al subdirectorio "public"
+RewriteRule ^(.*)$ /public/$1 [L]
+
+

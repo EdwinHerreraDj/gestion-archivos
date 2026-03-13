@@ -1,0 +1,2 @@
+Para poder subir al servidor lo que tenemos que hacer es primero es enviar los datos con el npm run build
+y una vez terminado podemos subir el paquete completo y generar lo necesario 
