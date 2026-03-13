@@ -32,6 +32,15 @@ class AuthenticatedSessionController extends Controller
             ])->withInput($request->only('email', 'remember'));
         }
 
+        if (!Auth::user()->active) {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+            return redirect()->back()->withErrors([
+                'login' => 'Tu cuenta está desactivada. Contacta al administrador.',
+            ])->withInput($request->only('email', 'remember'));
+        }
+
         // Regenerar la sesión para proteger contra fijación de sesión
         $request->session()->regenerate();
 
@@ -48,12 +57,10 @@ class AuthenticatedSessionController extends Controller
 
             if (Auth::user()->role === 'Admin' || Auth::user()->role === 'Super Admin') {
                 return redirect()->route('home');
-            }else{
+            } else {
                 return redirect()->route('mi_unidad');
             }
-            
         }
         return redirect()->route('login');
     }
-
 }

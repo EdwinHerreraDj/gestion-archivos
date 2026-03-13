@@ -48,6 +48,7 @@ Route::group(['prefix' => '/', 'middleware' => 'auth'], function () {
     /* ── Usuarios ───────────────────────────────────────────────── */
     Route::resource('users', UserController::class);
     Route::get('/login-logs', [LoginLogController::class, 'index'])->name('login.logs');
+    Route::post('/users/{id}/toggle-active', [UserController::class, 'toggleActive'])->name('users.toggleActive');
 
     /* ── Wildcards al final siempre ─────────────────────────────── */
     Route::get('{first}/{second}/{third}', [RoutingController::class, 'thirdLevel'])->name('third');

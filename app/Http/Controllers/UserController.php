@@ -32,6 +32,24 @@ class UserController extends Controller
         //
     }
 
+    public function toggleActive(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+
+        if ($user->id === session('user_id')) {
+            return response()->json(['success' => false, 'message' => 'No puedes desactivarte a ti mismo.'], 403);
+        }
+
+        $user->active = !$user->active;
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'active'  => $user->active,
+            'message' => $user->active ? 'Usuario activado' : 'Usuario desactivado',
+        ]);
+    }
+
     /**
      * Store a newly created resource in storage.
      */
@@ -109,20 +127,17 @@ class UserController extends Controller
      */
     public function destroy($id)
     {
+        if (session('user_role') !== 'Super Admin') {
+            return response()->json(['success' => false, 'message' => 'No tienes permiso para eliminar usuarios.'], 403);
+        }
+
         try {
             $user = User::findOrFail($id);
             $user->delete();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Usuario eliminado exitosamente.'
-            ], 200);
+            return response()->json(['success' => true, 'message' => 'Usuario eliminado exitosamente.'], 200);
         } catch (\Exception $e) {
             Log::error('Error al eliminar el usuario: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Ocurrió un error al eliminar el usuario.'
-            ], 500);
+            return response()->json(['success' => false, 'message' => 'Ocurrió un error al eliminar el usuario.'], 500);
         }
     }
 }

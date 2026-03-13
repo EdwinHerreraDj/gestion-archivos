@@ -58,6 +58,7 @@
                         <th class="px-6 py-3 text-left font-semibold">Email</th>
                         <th class="px-6 py-3 text-left font-semibold">Rol</th>
                         <th class="px-6 py-3 text-left font-semibold">Fecha de creación</th>
+                        <th class="px-6 py-3 text-left font-semibold">Estado</th>
                         <th class="px-6 py-3 text-left font-semibold">Acciones</th>
                     </tr>
                 </thead>
@@ -91,6 +92,15 @@
                             </td>
                             <td class="px-6 py-4 text-gray-400 text-xs">{{ $user->created_at }}</td>
                             <td class="px-6 py-4">
+                                <button onclick="toggleActive({{ $user->id }}, this)"
+                                    data-active="{{ $user->active ? '1' : '0' }}"
+                                    class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none {{ $user->active ? 'bg-emerald-500' : 'bg-gray-300' }}"
+                                    title="{{ $user->active ? 'Desactivar usuario' : 'Activar usuario' }}">
+                                    <span
+                                        class="inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform duration-200 {{ $user->active ? 'translate-x-6' : 'translate-x-1' }}"></span>
+                                </button>
+                            </td>
+                            <td class="px-6 py-4">
                                 <div class="flex items-center gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
                                     <button
                                         class="open-modal p-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors"
@@ -103,17 +113,21 @@
                                             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                                         </svg>
                                     </button>
-                                    <button
-                                        class="delete-user p-2 bg-red-50 text-red-500 rounded-lg hover:bg-red-100 transition-colors"
-                                        data-user-id="{{ $user->id }}" title="Eliminar Usuario">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
-                                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                            stroke-linecap="round" stroke-linejoin="round">
-                                            <path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path>
-                                            <line x1="18" y1="9" x2="12" y2="15"></line>
-                                            <line x1="12" y1="9" x2="18" y2="15"></line>
-                                        </svg>
-                                    </button>
+
+
+                                    @if (session('user_role') === 'Super Admin')
+                                        <button
+                                            class="delete-user p-2 bg-red-50 text-red-500 rounded-lg hover:bg-red-100 transition-colors"
+                                            data-user-id="{{ $user->id }}" title="Eliminar Usuario">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
+                                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                                stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path>
+                                                <line x1="18" y1="9" x2="12" y2="15"></line>
+                                                <line x1="12" y1="9" x2="18" y2="15"></line>
+                                            </svg>
+                                        </button>
+                                    @endif
                                 </div>
                             </td>
                         </tr>
@@ -329,6 +343,31 @@
             </div>
         </div>
     </div>
+
+    {{-- ===== MODAL: Confirmar Desactivar ===== --}}
+    <div id="toggleActiveModal"
+        class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm">
+            <div class="p-6 text-center">
+                <div id="toggleIcon"
+                    class="h-14 w-14 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-4">
+                    <i class="mgc_warning_fill text-2xl text-amber-500"></i>
+                </div>
+                <h3 id="toggleTitle" class="text-base font-bold text-gray-900 mb-1"></h3>
+                <p id="toggleMessage" class="text-sm text-gray-500 mb-6"></p>
+                <div class="flex gap-3">
+                    <button onclick="closeToggleModal()"
+                        class="flex-1 px-4 py-2.5 text-sm font-medium text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition">
+                        Cancelar
+                    </button>
+                    <button id="toggleConfirmBtn" onclick="confirmToggle()"
+                        class="flex-1 px-4 py-2.5 text-sm font-semibold text-white rounded-xl active:scale-95 transition-all">
+                        Confirmar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
 
 
@@ -343,4 +382,102 @@
 @section('script-bottom')
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.datatables.net/v/dt/dt-2.1.8/datatables.min.js"></script>
+    <script>
+        let pendingToggleUserId = null;
+        let pendingToggleBtn = null;
+
+        window.toggleActive = function(userId, btn) {
+            const isActive = btn.dataset.active === '1';
+
+            if (isActive) {
+                pendingToggleUserId = userId;
+                pendingToggleBtn = btn;
+
+                document.getElementById('toggleTitle').textContent = '¿Desactivar usuario?';
+                document.getElementById('toggleMessage').textContent =
+                    'Este usuario no podrá iniciar sesión mientras esté desactivado.';
+                document.getElementById('toggleIcon').className =
+                    'h-14 w-14 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-4';
+                document.getElementById('toggleIcon').innerHTML =
+                    '<i class="mgc_warning_fill text-2xl text-amber-500"></i>';
+
+                const confirmBtn = document.getElementById('toggleConfirmBtn');
+                confirmBtn.textContent = 'Desactivar';
+                confirmBtn.className =
+                    'flex-1 px-4 py-2.5 text-sm font-semibold text-white bg-red-500 rounded-xl hover:bg-red-600 active:scale-95 transition-all';
+
+                const modal = document.getElementById('toggleActiveModal');
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            } else {
+                executeToggle(userId, btn);
+            }
+        };
+
+        window.closeToggleModal = function() {
+            const modal = document.getElementById('toggleActiveModal');
+            modal.classList.remove('flex');
+            modal.classList.add('hidden');
+            pendingToggleUserId = null;
+            pendingToggleBtn = null;
+        };
+
+        window.confirmToggle = function() {
+            const userId = pendingToggleUserId;
+            const btn = pendingToggleBtn;
+            closeToggleModal();
+            if (userId && btn) {
+                executeToggle(userId, btn);
+            }
+        };
+
+        function executeToggle(userId, btn) {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+            fetch(`/users/${userId}/toggle-active`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Accept': 'application/json'
+                    },
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        btn.dataset.active = data.active ? '1' : '0';
+                        btn.classList.toggle('bg-emerald-500', data.active);
+                        btn.classList.toggle('bg-gray-300', !data.active);
+                        btn.querySelector('span').classList.toggle('translate-x-6', data.active);
+                        btn.querySelector('span').classList.toggle('translate-x-1', !data.active);
+                        btn.title = data.active ? 'Desactivar' : 'Activar';
+                        new Notyf({
+                            duration: 3000,
+                            dismissible: true,
+                            position: {
+                                x: 'right',
+                                y: 'top'
+                            }
+                        }).success(data.message);
+                    } else {
+                        new Notyf({
+                            duration: 3000,
+                            dismissible: true,
+                            position: {
+                                x: 'right',
+                                y: 'top'
+                            }
+                        }).error(data.message);
+                    }
+                })
+                .catch(() => new Notyf({
+                    duration: 3000,
+                    dismissible: true,
+                    position: {
+                        x: 'right',
+                        y: 'top'
+                    }
+                }).error('Error de conexión'));
+        }
+    </script>
 @endsection

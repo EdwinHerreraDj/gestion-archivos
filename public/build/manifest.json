@@ -367,7 +367,7 @@
     "src": "resources/js/pages/table-gridjs.js"
   },
   "resources/js/react/app.jsx": {
-    "file": "assets/app-73459814.js",
+    "file": "assets/app-696d8249.js",
     "imports": [
       "__commonjsHelpers-725317a4.js"
     ],
@@ -383,7 +383,7 @@
     "src": "resources/js/table-users.js"
   },
   "resources/scss/app.scss": {
-    "file": "assets/app-4cb57c22.css",
+    "file": "assets/app-c1a7a930.css",
     "isEntry": true,
     "src": "resources/scss/app.scss"
   },

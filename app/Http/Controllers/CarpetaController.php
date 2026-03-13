@@ -17,7 +17,7 @@ class CarpetaController extends Controller
         $notificaciones = CustomNotification::orderBy('created_at', 'desc')->get();
         $role           = session('user_role', 'Guest');
         $usuarioId      = session('user_id');
-        $usuarios       = User::all();
+        $usuarios       = User::where('active', true)->get();
 
         if ($role === 'User') {
             $carpetas = Carpeta::with('user')->whereNull('carpeta_padre_id')->where('user_id', $usuarioId)->get();
